@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { BEGIN, COMMIT, REVERT } from 'redux-optimist';
-import { get, pick, includes } from 'lodash';
+import { get, pick, includes, mapValues } from 'lodash';
 
 /**
  * WordPress dependencies
@@ -12,13 +12,15 @@ import { __ } from '@wordpress/i18n';
 // TODO: Ideally this would be the only dispatch in scope. This requires either
 // refactoring editor actions to yielded controls, or replacing direct dispatch
 // on the editor store with action creators (e.g. `REQUEST_POST_UPDATE_START`).
-import { dispatch as dataDispatch } from '@wordpress/data';
+import {
+	dispatch as dataDispatch,
+	select as dataSelect,
+} from '@wordpress/data';
 
 /**
  * Internal dependencies
  */
 import {
-	resetAutosave,
 	resetPost,
 	updatePost,
 } from '../actions';
@@ -26,12 +28,13 @@ import {
 	getCurrentPost,
 	getPostEdits,
 	getEditedPostContent,
-	getAutosave,
 	getCurrentPostType,
 	isEditedPostSaveable,
 	isEditedPostNew,
 	POST_UPDATE_TRANSACTION_ID,
 } from '../selectors';
+import { AUTOSAVE_PROPERTIES } from '../constants';
+import { getPostRawValue } from '../reducer';
 import { resolveSelector } from './utils';
 
 /**
@@ -59,7 +62,7 @@ export const requestPostUpdate = async ( action, store ) => {
 	let edits = getPostEdits( state );
 	const isAutosave = !! action.options.isAutosave;
 	if ( isAutosave ) {
-		edits = pick( edits, [ 'title', 'content', 'excerpt' ] );
+		edits = pick( edits, AUTOSAVE_PROPERTIES );
 	}
 
 	// New posts (with auto-draft status) must be explicitly assigned draft
@@ -103,11 +106,14 @@ export const requestPostUpdate = async ( action, store ) => {
 
 	let request;
 	if ( isAutosave ) {
+		const autosave = dataSelect( 'core' ).getAutosave( post.type, post.id );
+		const mappedAutosave = mapValues( pick( autosave, AUTOSAVE_PROPERTIES ), getPostRawValue );
+
 		// Ensure autosaves contain all expected fields, using autosave or
 		// post values as fallback if not otherwise included in edits.
 		toSend = {
-			...pick( post, [ 'title', 'content', 'excerpt' ] ),
-			...getAutosave( state ),
+			...pick( post, AUTOSAVE_PROPERTIES ),
+			...mappedAutosave,
 			...toSend,
 		};
 
@@ -129,8 +135,11 @@ export const requestPostUpdate = async ( action, store ) => {
 
 	try {
 		const newPost = await request;
-		const reset = isAutosave ? resetAutosave : resetPost;
-		dispatch( reset( newPost ) );
+		if ( isAutosave ) {
+			dataDispatch( 'core' ).receiveAutosave( post.id, newPost );
+		} else {
+			dispatch( resetPost( newPost ) );
+		}
 
 		// An autosave may be processed by the server as a regular save
 		// when its update is requested by the author and the post was

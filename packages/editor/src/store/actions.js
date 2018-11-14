@@ -7,6 +7,8 @@ import { castArray } from 'lodash';
  * Internal dependencies
  */
 import { dispatch } from './controls';
+import { dataDispatch, dataSelect } from '@wordpress/data';
+import deprecated from '@wordpress/deprecated';
 
 /**
  * Returns an action object used in signalling that editor has initialized with
@@ -46,15 +48,23 @@ export function resetPost( post ) {
  * Returns an action object used in signalling that the latest autosave of the
  * post has been received, by initialization or autosave.
  *
- * @param {Object} post Autosave post object.
+ * @deprecated since 5.0. Callers should use the `receiveAutosave( postId, autosave )`
+ * 			   selector from the '@wordpress/core-data' package.
+ *
+ * @param {Object} newAutosave Autosave post object.
  *
  * @return {Object} Action object.
  */
-export function resetAutosave( post ) {
-	return {
-		type: 'RESET_AUTOSAVE',
-		post,
-	};
+export function resetAutosave( newAutosave ) {
+	deprecated( 'resetAutosave action (`core/editor` store)', {
+		alternative: 'receiveAutosave action (`core` store)',
+		plugin: 'Gutenberg',
+	} );
+
+	const postId = dataSelect( 'core/editor' ).getCurrentPostId();
+	dataDispatch( 'core' ).receiveAutosave( postId, newAutosave );
+
+	return { type: '__INERT__' };
 }
 
 /**

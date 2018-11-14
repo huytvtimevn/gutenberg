@@ -13,11 +13,18 @@
 
 - BlockSwitcher will now consistently render an icon for block multi-selections.
 
-### Internal
+### Deprecations
 
 - Removed `jQuery` dependency.
 - Removed `TinyMCE` dependency.
 - RichText: improve format boundaries.
+- The `getAutosave`, `getAutosaveAttribute`, and `hasAutosave` selectors are deprecated. Please use the `getAutosave` selector in the `@wordpress/core-data` package.
+- The `resetAutosave` action is deprecated. An equivalent action `receiveAutosave` has been added to the `@wordpress/core-data` package.
+- The `isEditedPostAutosaveable` action now requires that the parameter `autosave` is provided.
+
+### Internal
+
+- Removed `jQuery` dependency
 
 ## 9.0.7 (2019-01-03)
 
