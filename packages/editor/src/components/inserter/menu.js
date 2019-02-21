@@ -345,21 +345,30 @@ export class InserterMenu extends Component {
 }
 
 export default compose(
-	withSelect( ( select, { rootClientId } ) => {
+	withSelect( ( select, { clientId, isAppender, rootClientId } ) => {
 		const {
 			getInserterItems,
 			getBlockName,
+			getBlockRootClientId,
+			getBlockSelectionEnd,
 		} = select( 'core/editor' );
 		const {
 			getChildBlockNames,
 		} = select( 'core/blocks' );
 
-		const rootBlockName = getBlockName( rootClientId );
+		let rootClientIdToUse = rootClientId;
+		if ( ! rootClientIdToUse && ! clientId && ! isAppender ) {
+			const end = getBlockSelectionEnd();
+			if ( end ) {
+				rootClientIdToUse = getBlockRootClientId( end ) || undefined;
+			}
+		}
+		const rootBlockName = getBlockName( rootClientIdToUse );
 
 		return {
 			rootChildBlocks: getChildBlockNames( rootBlockName ),
-			items: getInserterItems( rootClientId ),
-			rootClientId,
+			items: getInserterItems( rootClientIdToUse ),
+			rootClientId: rootClientIdToUse,
 		};
 	} ),
 	withDispatch( ( dispatch, ownProps, { select } ) => {
@@ -377,7 +386,6 @@ export default compose(
 		function getInsertionPoint() {
 			const {
 				getBlockIndex,
-				getBlockRootClientId,
 				getBlockSelectionEnd,
 				getBlockOrder,
 			} = select( 'core/editor' );
@@ -394,10 +402,9 @@ export default compose(
 			// If there a selected block, we insert after the selected block.
 			const end = getBlockSelectionEnd();
 			if ( ! isAppender && end ) {
-				const selectedBlockRootClientId = getBlockRootClientId( end ) || undefined;
 				return {
-					index: getBlockIndex( end, selectedBlockRootClientId ) + 1,
-					rootClientId: selectedBlockRootClientId,
+					index: getBlockIndex( end, rootClientId ) + 1,
+					rootClientId,
 				};
 			}
 
