@@ -7,6 +7,13 @@ The Gutenberg project's deprecation policy is intended to support backward compa
 - The PHP function `gutenberg_load_plugin_textdomain` has been removed.
 - The PHP function `gutenberg_get_jed_locale_data` has been removed.
 - The PHP function `gutenberg_load_locale_data` has been removed.
+- The PHP function `gutenberg_init` has been removed.
+- The PHP function `is_gutenberg_page` has been removed. Use [`WP_Screen::is_block_editor`](https://developer.wordpress.org/reference/classes/wp_screen/is_block_editor/) instead.
+- The PHP function `the_gutenberg_project` has been removed.
+- The PHP function `gutenberg_default_post_format_template` has been removed.
+- The PHP function `gutenberg_get_available_image_sizes` has been removed.
+- The PHP function `gutenberg_get_autosave_newer_than_post_save` has been removed.
+- The PHP function `gutenberg_default_post_format_template` has been removed.
 
 ## 5.3.0
 
